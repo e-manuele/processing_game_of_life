@@ -1,0 +1,144 @@
+Cell[][] cells;
+int cellSize = 5;
+int numX, numY;
+
+void setup() {
+  size(600, 600);
+  // fullScreen(); // goes full screen
+  frameRate(10); // reduce frame rate to 8 fps
+  numX = floor(width/cellSize);
+  numY = floor(height/cellSize);
+  startup();
+}
+
+void draw() {
+  background(0);
+
+  for (int x = 0; x < numX; x++) {
+    for (int y = 0; y < numY; y++) {
+      cells[x][y].compNextState();
+    }
+  }
+
+  for (int x = 0; x < numX; x++) {
+    for (int y = 0; y < numY; y++) {
+      cells[x][y].drawMe();
+    }
+  }
+}
+
+void startup() {
+  // create the cell grid
+  cells = new Cell[numX][numY];
+  for (int x = 0; x < numX; x++) {
+    for (int y = 0; y < numY; y++) {
+      cells[x][y] = new Cell(x, y);
+    }
+  }
+  // assign cells' neighbors
+  for (int x = 0; x < numX; x++) {
+    for (int y = 0; y < numY; y++) {
+      int above = y-1;
+      int below = y+1;
+      int left = x-1;
+      int right = x+1;
+      if (above < 0) above = numY-1;
+      if (below == numY) below = 0;
+      if (left < 0) left = numX-1;
+      if (right == numX) right = 0;
+
+      cells[x][y].addNeighbour(cells[left][above]);
+      cells[x][y].addNeighbour(cells[left][y]);
+      cells[x][y].addNeighbour(cells[left][below]);
+      cells[x][y].addNeighbour(cells[x][below]);
+      cells[x][y].addNeighbour(cells[right][below]);
+      cells[x][y].addNeighbour(cells[right][y]);
+      cells[x][y].addNeighbour(cells[right][above]);
+      cells[x][y].addNeighbour(cells[x][above]);
+    }
+  }
+}
+
+void mousePressed() {
+  startup();
+}
+
+class Cell {
+  float x, y;
+  boolean state;
+  boolean nextState;
+  Cell[] neighbours;
+
+  // create a random world
+  Cell(float _x, float _y) {
+    x = _x * cellSize;
+    y = _y * cellSize;
+    if (random(1) > 0.5) {
+      nextState = true;
+    } else {
+      nextState = false;
+    }
+    state = nextState;
+    neighbours = new Cell[0];
+  }
+
+  void addNeighbour(Cell cell) {
+    neighbours = (Cell[]) append(neighbours, cell);
+  }
+
+  void compNextState() {
+    // count live neighbors
+    int liveCount = 0;
+    for (int i=0; i < neighbours.length; i++) {
+      if (neighbours[i].state == true) {
+        liveCount++;
+      }
+    }
+    // a living cell with 2 or 3 living neighbors survives, otherwise it dies
+    if (state == true) {
+      if ((liveCount == 2) || (liveCount == 3)) {
+        nextState = true;
+      } else {
+        nextState = false;
+      }
+      // a dead cell with exactly 3 living neighbors is reborn
+    } else {
+      if (liveCount == 3) {
+        nextState = true;
+      } else {
+        nextState = false;
+      }
+    }
+  }
+
+  void drawMe() {
+    state = nextState;
+    noStroke();
+    if (state == true) {
+      
+      int opt = int(random(1,3));
+      int opti = int(random(1,3));
+      float r = random(1,3);
+      int op = int(random(4,10));
+      
+      int carattere = int(random(0, 128)); // seleziona un carattere casuale tra a e z
+      int col= int(random(0,7));
+      if (col==0)        { fill(0,127,255);  }
+       else if( col ==1) { fill(127,0,255);  }
+       else if( col ==2) { fill(255,0,127);  }
+       else if( col ==3) { fill(255,0,255);  }
+       else if( col ==4) { fill(255,0,0);    }
+       else if( col ==5) { fill(0,255,0);    }
+       else if( col ==6) { fill(0,255,127);    }
+      if (op == 0)     {      circle(x, y, cellSize*(r/2));          } 
+      else if (op == 1){      triangle(x-3,y-3,x+opt,y+3+opt,x+3,y-3); }
+      else if (op == 2){      rect(x, y, cellSize*opt,cellSize*opti);   }
+      else if (op == 3){      ellipse(x, y, cellSize*opt,cellSize*opti);   }
+      else if (op > 4){      text(char(carattere),x,y) ; }
+    } else {
+      fill(30); // black is dead
+      rect(x, y, cellSize,cellSize);
+    }
+    //, cellSize);
+  }
+}
